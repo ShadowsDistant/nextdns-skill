@@ -1,71 +1,146 @@
 ---
 name: nextdns-api
-description: Query and review NextDNS DNS query logs via the official API. Use when asked about DNS queries, blocked domains, allowed domains, device activity, or any NextDNS log analysis.
+description: Query and manage NextDNS via API - full feature set including logs, analytics, profile management, blocklists, and settings.
 compatibility: Created for Zo Computer
 metadata:
   author: shadowsdistant.zo.computer
+  version: "2.0.0"
 ---
 
 # NextDNS API Skill
 
-Integrates with the NextDNS API to pull DNS query logs and analytics.
+Query NextDNS DNS logs and analytics, manage profiles, blocklists, and settings.
 
 ## Setup
 
 1. Get your API key from https://my.nextdns.io/account
-2. Save it as `NEXTDNS_API_KEY` in [Settings > Advanced](/?t=settings&s=advanced) → Secrets
+2. Add to Zo: **Settings → Advanced → Secrets** as `NEXTDNS_API_KEY`
 
-## Usage
+## Commands
 
-The skill provides a Python CLI tool for querying logs and analytics.
+### Profile Management
 
-### Commands
+| Command | Description |
+|---------|-------------|
+| `profiles` | List all NextDNS profiles |
+| `profile-get` | Get full profile configuration |
+| `profile-create --name "My Profile"` | Create a new profile |
+| `profile-delete --yes` | Delete a profile |
+
+### Settings Management
+
+| Command | Description |
+|---------|-------------|
+| `settings-get security` | Get security settings |
+| `settings-get privacy` | Get privacy settings |
+| `settings-get parentalControl` | Get parental control settings |
+| `settings-get settings/logs` | Get logging settings |
+| `settings-get settings/performance` | Get performance settings |
+| `settings-update security --json-file config.json` | Update settings from JSON |
+| `settings-update privacy --key blocklists --value [...]` | Update single setting |
+
+### Denylist & Allowlist
+
+| Command | Description |
+|---------|-------------|
+| `list-get denylist` | Show denylist domains |
+| `list-get allowlist` | Show allowlist domains |
+| `list-add denylist example.com` | Add domain to denylist |
+| `list-add allowlist example.com --inactive` | Add as inactive |
+| `list-remove denylist example.com` | Remove from denylist |
+| `list-toggle denylist example.com --active true` | Toggle active status |
+
+### Privacy Blocklists & Natives
+
+| Command | Description |
+|---------|-------------|
+| `blocklists-get blocklists` | Show enabled blocklists |
+| `blocklists-get natives` | Show native tracker settings |
+| `blocklists-add blocklists nextdns-recommended` | Add blocklist |
+| `blocklists-add natives apple` | Enable native tracking protection |
+| `blocklists-remove blocklists oisd` | Remove blocklist |
+
+### Logs Querying
+
+| Command | Description |
+|---------|-------------|
+| `logs` | Get recent DNS logs |
+| `logs --status blocked` | Show blocked queries only |
+| `logs --domain facebook.com` | Filter by domain |
+| `logs --device "iPhone"` | Filter by device |
+| `logs --from -1h --to now` | Time range filter |
+| `logs --limit 500` | Get 500 results |
+| `logs --raw` | Include all query types |
+| `logs --cursor XYZ` | Paginate results |
+
+### Logs Streaming & Management
+
+| Command | Description |
+|---------|-------------|
+| `logs-stream` | Stream logs in real-time |
+| `logs-stream --device XYZ` | Stream from specific device |
+| `logs-stream --stream-id ABC` | Resume from stream ID |
+| `logs-download --output logs.json` | Download logs file |
+| `logs-clear --yes` | Clear all logs |
+
+### Analytics
+
+| Command | Description |
+|---------|-------------|
+| `analytics status` | Query status breakdown |
+| `analytics domains` | Top queried domains |
+| `analytics domains --root` | Root domains only |
+| `analytics reasons` | Block reasons |
+| `analytics protocols` | Protocol usage |
+| `analytics queryTypes` | Query type distribution |
+| `analytics ips` | Top client IPs with geo data |
+| `analytics ipVersions` | IPv4 vs IPv6 |
+| `analytics dnssec` | DNSSEC validation stats |
+| `analytics encryption` | Encrypted vs plaintext |
+| `analytics devices` | Per-device stats |
+| `analytics destinations --dest-type countries` | Queries by country |
+| `analytics destinations --dest-type gafam` | Big Tech queries |
+
+### Analytics Time Series
+
+| Command | Description |
+|---------|-------------|
+| `analytics status --series` | Status over time |
+| `analytics domains --series --interval 1h` | Hourly domain stats |
+| `analytics protocols --series --from -7d --interval 1d` | Daily protocol stats |
+| `analytics devices --series --alignment clock --timezone America/New_York` | Clock-aligned stats |
+
+## Examples
 
 ```bash
-# Get recent logs (last 100 queries)
-nextdns logs
+# Get blocked queries from last hour
+python nextdns.py logs --status blocked --from -1h
 
-# Get logs with filters
-nextdns logs --status blocked --limit 50
-nextdns logs --domain facebook.com
-nextdns logs --device "iPhone" --from "-1h"
+# Stream blocked ads in real-time
+python nextdns.py logs-stream --status blocked
 
-# Get analytics summary
-nextdns analytics status
-nextdns analytics domains --status blocked
-nextdns analytics devices
-nextdns analytics reasons
+# Check which blocklists are blocking
+python nextdns.py analytics reasons --limit 20
 
-# List your profiles
-nextdns profiles
+# See top devices
+python nextdns.py analytics devices --limit 10
 
-# Get logs from a specific profile
-nextdns logs --profile <profile_id>
+# Add domain to denylist
+python nextdns.py list-add denylist tracking-site.com
+
+# Enable a new blocklist
+python nextdns.py blocklists-add blocklists oisd
+
+# Get hourly stats for last 24 hours
+python nextdns.py analytics status --series --from -1d --interval 1h
+
+# Check DNSSEC validation rates
+python nextdns.py analytics dnssec
+
+# Download all logs
+python nextdns.py logs-download --output my-logs.json
 ```
 
-### Filter Options
+## API Reference
 
-- `--status`: `default`, `blocked`, `allowed`, `error`
-- `--domain`: Filter by domain name (partial match)
-- `--device`: Filter by device name
-- `--from`: Start time (e.g., `-1h`, `-1d`, `-7d`, `2024-01-01`)
-- `--to`: End time
-- `--limit`: Number of results (10-1000, default 100)
-- `--raw`: Show all DNS queries including noise (default: filtered)
-- `--profile`: Specify profile ID (default: first profile)
-
-### Status Codes
-
-- `default`: Normal query with no blocking
-- `blocked`: Query was blocked
-- `allowed`: Query was explicitly allowed
-- `error`: DNS resolution error
-
-## Script Location
-
-`scripts/nextdns.py` - Main CLI tool
-
-## References
-
-- API Docs: https://nextdns.github.io/api/
-- Account: https://my.nextdns.io/account
+See https://nextdns.github.io/api/ for full API documentation.
