@@ -1,322 +1,599 @@
 # NextDNS Skill for Zo Computer
 
-[![Skill Version](https://img.shields.io/badge/Skill%20Version-1.0.0-blue.svg)](Skills/nextdns/skills/nextdns-api)
+<div align="center">
+
+[![Skill Version](https://img.shields.io/badge/Skill%20Version-1.1.0-blue.svg)](https://github.com/ShadowsDistant/nextdns-skill)
 [![Platform](https://img.shields.io/badge/Platform-Zo%20Computer-6366f1.svg)](https://zo.computer)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12+-orange.svg)](https://python.org)
+[![NextDNS API](https://img.shields.io/badge/NextDNS%20API-v2-Badge?logo=nextdns)](https://nextdns.github.io/api/)
 
-Query NextDNS DNS logs and analytics directly from your Zo Computer terminal.
+**Query DNS logs and analytics, manage profiles, blocklists, allowlists, and settings via CLI.**
+
+</div>
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
 - [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
+- [Setup](#setup)
 - [Usage](#usage)
 - [Command Reference](#command-reference)
-- [Examples](#examples)
-- [Output Samples](#output-samples)
+- [Output Examples](#output-examples)
+- [Profile Management](#profile-management)
+- [Configuration Options](#configuration-options)
 - [Troubleshooting](#troubleshooting)
-- [License](#license)
-
----
-
-## Overview
-
-This skill provides a command-line interface to the [NextDNS API](https://api.nextdns.io), allowing you to:
-
-- 🔍 **Query DNS logs** — See exactly what DNS queries are being made on your network
-- 📊 **View analytics** — Understand traffic patterns, top domains, and device usage
-- 🚫 **Audit blocked queries** — Review what NextDNS has blocked and why
-- 📱 **Filter by device** — Track activity per device on your network
-- 🔎 **Search domains** — Find specific domain lookups in real-time
 
 ---
 
 ## Features
 
-- **Multiple analytics endpoints** — status, domains, devices, reasons, protocols, query types, IPs, destinations
-- **Flexible filtering** — By status, domain, device, time range
-- **Profile support** — Work with multiple NextDNS profiles
-- **Pagination** — Handle large result sets with cursor-based pagination
-- **Error handling** — Clear, actionable error messages with API error details
-- **No dependencies** — Uses only Python standard library + `requests`
+- 📊 **Analytics** — Query status, domains, devices, protocols, query types, IPs, DNSSEC, encryption, and destinations
+- 📜 **Logs** — Browse, filter, stream live, download, and clear DNS query logs
+- 👥 **Profile Management** — Create, view, update, and delete NextDNS profiles
+- 🚫 **Blocklist/Denylist** — Add/remove domains from your blocklist
+- ✅ **Allowlist** — Manage domains that should never be blocked
+- ⚙️ **Settings** — Configure logging, performance, security, privacy, and parental controls
+- 🔒 **Security** — Threat intelligence feeds, AI threat detection, safe browsing
+- 🛡️ **Parental Controls** — Service blocking, content categories, safe search
 
 ---
 
-## Prerequisites
+## Setup
 
-| Requirement | Details |
-|-------------|---------|
-| Python | 3.12 or higher |
-| NextDNS Account | [Sign up free](https://nextdns.io) |
-| NextDNS API Key | Generate in your NextDNS dashboard |
+### 1. Get Your NextDNS API Key
 
----
+1. Log in to your NextDNS account at [my.nextdns.io](https://my.nextdns.io/account)
+2. Scroll to the bottom of the page
+3. Copy your API key
 
-## Installation
+### 2. Add API Key to Zo
 
-### 1. Clone the Repository
+Navigate to **Settings → Advanced → Secrets** and add:
+
+| Key | Value |
+|-----|-------|
+| `NEXTDNS_API_KEY` | Your NextDNS API key |
+
+### 3. Usage
 
 ```bash
-git clone https://github.com/ShadowsDistant/nextdns-skill.git
-cd nextdns-skill
+python scripts/nextdns.py <command> [options]
 ```
-
-### 2. Set Up API Key
-
-1. Log into [my.nextdns.io](https://my.nextdns.io)
-2. Go to **Settings → API**
-3. Generate a new API key
-4. Add it to Zo Computer:
-   - Navigate to **Settings → Advanced → Secrets**
-   - Add a new secret: `NEXTDNS_API_KEY` = `<your-api-key>`
-
----
-
-## Configuration
-
-The tool reads your API key from the `NEXTDNS_API_KEY` environment variable.
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NEXTDNS_API_KEY` | ✅ Yes | Your NextDNS API key |
 
 ---
 
 ## Usage
 
-```bash
-python nextdns.py <command> [options]
-```
-
-### Quick Start
+### Quick Examples
 
 ```bash
-# View all profiles
-python nextdns.py profiles
+# List all profiles
+python scripts/nextdns.py profiles
 
-# Get recent DNS logs (last 50 queries)
-python nextdns.py logs --limit 50
+# Get recent DNS logs
+python scripts/nextdns.py logs --limit 50
 
-# See blocked queries only
-python nextdns.py logs --status blocked --limit 50
+# Get blocked queries only
+python scripts/nextdns.py logs --status blocked --limit 20
 
-# View top domains by query volume
-python nextdns.py analytics domains --limit 20
+# Search logs for specific domain
+python scripts/nextdns.py logs --domain example.com
 
-# See what's being blocked and why
-python nextdns.py analytics reasons
+# Get analytics by status
+python scripts/nextdns.py analytics status
 
-# View device breakdown
-python nextdns.py analytics devices
+# Get top domains by queries
+python scripts/nextdns.py analytics domains --limit 10
+
+# Get device breakdown
+python scripts/nextdns.py analytics devices
+
+# Get query type distribution
+python scripts/nextdns.py analytics queryTypes
+
+# Check DNSSEC validation status
+python scripts/nextdns.py analytics dnssec
+
+# Get encryption stats
+python scripts/nextdns.py analytics encryption
+
+# Get IP/geo analytics
+python scripts/nextdns.py analytics ips --limit 10
+
+# Get destination countries
+python scripts/nextdns.py analytics destinations
+
+# Get GAFAM company tracking
+python scripts/nextdns.py analytics destinations --type gafam
+
+# Get top blocking reasons
+python scripts/nextdns.py analytics reasons --limit 10
+
+# Stream live logs (Ctrl+C to stop)
+python scripts/nextdns.py logs --stream
+
+# Download logs as JSONL
+python scripts/nextdns.py logs --download
+
+# Clear all logs
+python scripts/nextdns.py logs --clear
+
+# View profile settings
+python scripts/nextdns.py settings
+
+# Update specific settings
+python scripts/nextdns.py settings --patch-logs '{"enabled": true, "retention": 7776000}'
+
+# View security settings
+python scripts/nextdns.py security
+
+# Update security settings
+python scripts/nextdns.py security --patch '{"threatIntelligenceFeeds": true, "googleSafeBrowsing": false}'
+
+# View privacy settings
+python scripts/nextdns.py privacy
+
+# Update privacy settings
+python scripts/nextdns.py privacy --patch '{"disguisedTrackers": true}'
+
+# View parental controls
+python scripts/nextdns.py parental
+
+# Update parental controls
+python scripts/nextdns.py parental --patch '{"safeSearch": true, "youtubeRestrictedMode": true}'
+
+# Manage denylist
+python scripts/nextdns.py denylist
+python scripts/nextdns.py denylist --add badsite.com
+python scripts/nextdns.py denylist --remove badsite.com
+
+# Manage allowlist
+python scripts/nextdns.py allowlist
+python scripts/nextdns.py allowlist --add goodsite.com
+python scripts/nextdns.py allowlist --remove goodsite.com
+
+# Create/delete profiles
+python scripts/nextdns.py create-profile --name "My New Profile"
+python scripts/nextdns.py delete-profile --profile <profile_id>
 ```
 
 ---
 
 ## Command Reference
 
-### `profiles`
+### Global Options
 
-List all NextDNS profiles associated with your account.
-
-```bash
-python nextdns.py profiles
-```
-
-**Output columns:** `ID` | `Name`
+| Option | Description |
+|--------|-------------|
+| `--profile <id>` | Use specific profile ID (default: first profile) |
+| `--help`, `-h` | Show help for command |
 
 ---
 
-### `logs`
+### Profiles
+
+```bash
+python scripts/nextdns.py profiles
+```
+
+List all NextDNS profiles.
+
+**Output:**
+```
+ID                   Name
+-----------------------------------------------------
+abc123def            My Profile
+456xyz789            Work Profile
+```
+
+---
+
+### Logs
+
+```bash
+python scripts/nextdns.py logs [options]
+```
 
 Fetch DNS query logs.
 
-```bash
-python nextdns.py logs [options]
-```
-
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--profile <id>` | string | first profile | Profile ID to query |
-| `--status` | enum | — | Filter: `blocked`, `allowed`, `default`, `error` |
-| `--domain <name>` | string | — | Filter by domain name |
-| `--device <name>` | string | — | Filter by device name |
-| `--from <time>` | string | — | Start time (`-1h`, `-1d`, `-7d`, `2024-01-01`) |
-| `--to <time>` | string | — | End time |
-| `--limit` | int | 100 | Results count (10–1000) |
-| `--sort` | enum | `desc` | Sort: `asc`, `desc` |
-| `--raw` | flag | false | Show all queries including noise |
-
-**Output columns:** `Timestamp` | `Domain` | `Status` | `Device`
+| `--status` | string | | Filter: `default`, `blocked`, `allowed`, `error` |
+| `--domain` | string | | Filter by domain name |
+| `--device` | string | | Filter by device name |
+| `--from` | string | | Start time (`-1h`, `-1d`, `-7d`, `now`) |
+| `--to` | string | | End time |
+| `--limit` | int | 100 | Results (10-1000) |
+| `--sort` | string | desc | Sort: `asc`, `desc` |
+| `--raw` | flag | false | Show all DNS queries (including noise) |
+| `--stream` | flag | false | Stream live logs |
+| `--download` | flag | false | Download logs as JSONL |
+| `--clear` | flag | false | Clear all logs |
+| `--cursor` | string | | Pagination cursor |
 
 ---
 
-### `analytics`
-
-Fetch analytics data for an endpoint.
+### Analytics
 
 ```bash
-python nextdns.py analytics <endpoint> [options]
+python scripts/nextdns.py analytics <endpoint> [options]
 ```
 
-#### Available Endpoints
+Fetch analytics data.
 
 | Endpoint | Description |
 |----------|-------------|
-| `status` | Allowed vs blocked query breakdown |
+| `status` | Query status breakdown (default, blocked, allowed) |
 | `domains` | Top domains by query volume |
-| `devices` | Queries grouped by device |
-| `reasons` | Block reasons (parental, security, etc.) |
-| `protocols` | DNS protocol distribution (DoH, DoT, etc.) |
-| `queryTypes` | Query types (A, AAAA, TXT, etc.) |
-| `ips` | Client IP addresses |
-| `destinations` | Upstream DNS servers used |
-
-#### Analytics Options
+| `devices` | Device breakdown |
+| `protocols` | DNS protocol breakdown (DoH, DoT, UDP) |
+| `queryTypes` | DNS query type distribution (A, AAAA, HTTPS, etc.) |
+| `ips` | Top IP addresses by queries |
+| `reasons` | Top blocking reasons |
+| `destinations` | Top destination countries |
+| `ipVersions` | IPv4 vs IPv6 breakdown |
+| `dnssec` | DNSSEC validation status |
+| `encryption` | Encrypted vs unencrypted queries |
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--profile <id>` | string | first profile | Profile ID to query |
-| `--status` | enum | — | Filter: `blocked`, `allowed` |
-| `--limit` | int | 10 | Number of results |
+| `--status` | string | | Filter: `default`, `blocked`, `allowed` |
+| `--root` | flag | false | Show root domains only |
+| `--type` | string | | For `destinations`: `countries` or `gafam` |
+| `--limit` | int | 10 | Number of results (1-500) |
+| `--from` | string | | Start time |
+| `--to` | string | | End time |
+| `--series` | flag | false | Return time series data |
 
 ---
 
-## Examples
-
-### View All Blocked Queries
+### Settings
 
 ```bash
-python nextdns.py logs --status blocked --limit 100
+python scripts/nextdns.py settings [options]
 ```
 
-### Search Logs for a Specific Domain
+View and update profile settings.
 
-```bash
-python nextdns.py logs --domain google.com --limit 50
-```
+| Option | Description |
+|--------|-------------|
+| `--view` | View current settings (default) |
+| `--patch` | Update settings (JSON) |
+| `--logs` | Target logs settings |
+| `--performance` | Target performance settings |
+| `--blockPage` | Target block page settings |
 
-### Filter Logs by Device
-
-```bash
-python nextdns.py logs --device "iPhone" --limit 50
-```
-
-### Get Top 25 Domains
-
-```bash
-python nextdns.py analytics domains --limit 25
-```
-
-### View Block Reasons
-
-```bash
-python nextdns.py analytics reasons
-```
-
-### Get Last Hour's Activity
-
-```bash
-python nextdns.py logs --from -1h --limit 100
-```
-
-### See Device Breakdown
-
-```bash
-python nextdns.py analytics devices
-```
-
-### Query Specific Profile
-
-```bash
-python nextdns.py logs --profile "abc123" --limit 50
+**Settings Structure:**
+```json
+{
+  "logs": {
+    "enabled": true,
+    "drop": { "ip": false, "domain": false },
+    "retention": 7776000,
+    "location": "eu"
+  },
+  "blockPage": { "enabled": true },
+  "performance": {
+    "ecs": true,
+    "cacheBoost": false,
+    "cnameFlattening": true
+  },
+  "web3": true
+}
 ```
 
 ---
 
-## Output Samples
+### Security
 
-### `profiles`
-
-```
-ID                  Name
--------------------------------------------------------
-x9z2a8              Home Network
-y7w1b6              Work Setup
+```bash
+python scripts/nextdns.py security [options]
 ```
 
-### `logs`
+Manage security settings.
 
+| Option | Description |
+|--------|-------------|
+| `--view` | View current security settings (default) |
+| `--patch` | Update security settings (JSON) |
+
+**Available Security Options:**
+| Setting | Description |
+|---------|-------------|
+| `threatIntelligenceFeeds` | Block malicious domains via threat intel feeds |
+| `aiThreatDetection` | AI-powered threat detection |
+| `googleSafeBrowsing` | Google Safe Browsing |
+| `cryptojacking` | Block cryptojacking domains |
+| `dnsRebinding` | Block DNS rebinding attacks |
+| `idnHomographs` | Block IDN homograph attacks |
+| `typosquatting` | Block typosquatting domains |
+| `dga` | Block DGA (domain generation algorithm) |
+| `nrd` | Block newly registered domains |
+| `ddns` | Block dynamic DNS domains |
+| `parking` | Block parked domains |
+| `csam` | Block CSAM content |
+| `tlds` | Block specific TLDs |
+
+---
+
+### Privacy
+
+```bash
+python scripts/nextdns.py privacy [options]
 ```
-Timestamp                     Domain                                       Status    Device
+
+Manage privacy settings.
+
+| Option | Description |
+|--------|-------------|
+| `--view` | View current privacy settings (default) |
+| `--patch` | Update privacy settings (JSON) |
+| `--blocklist` | Manage blocklists |
+| `--add-blocklist` | Add a blocklist |
+| `--remove-blocklist` | Remove a blocklist |
+| `--natives` | Manage native trackers to block |
+| `--add-native` | Add native tracker |
+| `--remove-native` | Remove native tracker |
+
+**Privacy Options:**
+| Setting | Description |
+|---------|-------------|
+| `disguisedTrackers` | Block disguised third-party trackers |
+| `allowAffiliate` | Allow affiliate tracking |
+
+---
+
+### Parental Controls
+
+```bash
+python scripts/nextdns.py parental [options]
+```
+
+Manage parental controls.
+
+| Option | Description |
+|--------|-------------|
+| `--view` | View current parental settings (default) |
+| `--patch` | Update parental settings (JSON) |
+| `--service` | Manage blocked services |
+| `--add-service` | Add blocked service |
+| `--remove-service` | Remove blocked service |
+| `--category` | Manage content categories |
+| `--add-category` | Add content category |
+| `--remove-category` | Remove content category |
+
+**Parental Control Options:**
+| Setting | Description |
+|---------|-------------|
+| `safeSearch` | Force safe search on search engines |
+| `youtubeRestrictedMode` | Enable YouTube restricted mode |
+| `blockBypass` | Block bypass methods |
+
+**Services:** `tiktok`, `facebook`, `instagram`, `twitter`, `youtube`, `netflix`, `gaming` (and more)
+
+**Categories:** `porn`, `social-networks`, `gambling`, `torrents`, `gaming`, `dating`, `violent`
+
+---
+
+### Denylist
+
+```bash
+python scripts/nextdns.py denylist [options]
+```
+
+Manage blocked domains.
+
+| Option | Description |
+|--------|-------------|
+| `--view` | View denylist (default) |
+| `--add <domain>` | Add domain to denylist |
+| `--remove <domain>` | Remove domain from denylist |
+| `--activate <domain>` | Activate a previously deactivated domain |
+| `--deactivate <domain>` | Deactivate without removing |
+
+---
+
+### Allowlist
+
+```bash
+python scripts/nextdns.py allowlist [options]
+```
+
+Manage always-allowed domains.
+
+| Option | Description |
+|--------|-------------|
+| `--view` | View allowlist (default) |
+| `--add <domain>` | Add domain to allowlist |
+| `--remove <domain>` | Remove domain from allowlist |
+| `--activate <domain>` | Activate a previously deactivated domain |
+| `--deactivate <domain>` | Deactivate without removing |
+
+---
+
+### Profile Management
+
+```bash
+python scripts/nextdns.py create-profile --name "My Profile"
+python scripts/nextdns.py delete-profile --profile <id>
+```
+
+---
+
+## Output Examples
+
+### Analytics Status
+```
+Status          Queries
+---------------------------------
+default         819491
+blocked         132513
+allowed         6923
+```
+
+### Analytics Domains
+```
+Domain                                  Queries    Root
+-------------------------------------------------------------------------------------
+app-measurement.com                     29801
+gateway.icloud.com                      18468      icloud.com
+app.smartmailcloud.com                  16414      smartmailcloud.com
+```
+
+### Analytics Devices
+```
+Device Name                     Model                   Queries
+----------------------------------------------------------------------
+Romain's iPhone                 iPhone 12 Pro Max       489885
+MBP                             Macbook Pro             215663
+```
+
+### Analytics Query Types
+```
+Type     Name     Queries
+---------------------------
+28       AAAA     356230
+1        A        341812
+65       HTTPS    260478
+```
+
+### DNS Logs
+```
+Timestamp                       Domain                                       Status     Device
 --------------------------------------------------------------------------------------------------------------
-2024-03-25 10:45:23          doubleclick.net                              allowed   iPhone
-2024-03-25 10:45:22          googleadservices.com                        blocked   MacBook-Pro
-2024-03-25 10:45:21          api.example.com                             allowed   Desktop
+2024-01-15T10:30:15.123Z       api.example.com                              default    John's iPhone
+2024-01-15T10:29:45.456Z       tracker.ads.com                              blocked    John's iPhone
+2024-01-15T10:29:30.789Z       dns.google                                  default    MacBook-Pro
 ```
 
-### `analytics status`
+---
 
-```
-Status           Queries
------------------------------------
-allowed          12450
-blocked          834
+## Profile Management
+
+### Create Profile
+```bash
+python scripts/nextdns.py create-profile --name "Work Profile"
 ```
 
-### `analytics domains`
+### Delete Profile
+```bash
+python scripts/nextdns.py delete-profile --profile abc123
+```
 
+### Get Full Profile
+```bash
+python scripts/nextdns.py get-profile --profile abc123
 ```
-Domain                                           Queries     Root
------------------------------------------------------------------------------------------------------------------
-google.com                                       2340        google.com
-facebook.com                                    1892        facebook.com
-api.twitter.com                                  456         twitter.com
+
+---
+
+## Configuration Options
+
+### Logs Settings
+
+```json
+{
+  "logs": {
+    "enabled": true,
+    "drop": {
+      "ip": false,
+      "domain": false
+    },
+    "retention": 7776000,
+    "location": "eu"
+  }
+}
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled` | boolean | Enable query logging |
+| `drop.ip` | boolean | Don't log IP addresses |
+| `drop.domain` | boolean | Don't log domain queries |
+| `retention` | integer | Retention in seconds (default: 7776000 = 90 days) |
+| `location` | string | Data region: `eu`, `us`, or leave null for auto |
+
+### Performance Settings
+
+```json
+{
+  "performance": {
+    "ecs": true,
+    "cacheBoost": false,
+    "cnameFlattening": true
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `ecs` | EDNS Client Subnet (preserve client location for CDN) |
+| `cacheBoost` | Increase cache hit rate |
+| `cnameFlattening` | Flatten CNAME chains for faster resolution |
+
+### Web3 Settings
+
+```json
+{
+  "web3": true
+}
+```
+
+| Value | Description |
+|-------|-------------|
+| `true` | Enable Web3 features |
+| `false` | Standard DNS resolution |
 
 ---
 
 ## Troubleshooting
 
-### "NEXTDNS_API_KEY not found"
+### API Key Not Found
 
-Your API key isn't set in Zo secrets. Go to **Settings → Advanced → Secrets** and add `NEXTDNS_API_KEY`.
+```
+Error: NEXTDNS_API_KEY not found. Add it in Settings → Advanced → Secrets.
+```
 
-### "No logs found matching your criteria"
+**Fix:** Add `NEXTDNS_API_KEY` to your Zo secrets.
 
-- Try widening your time range (`--from -7d`)
-- Use `--status allowed` to see all non-blocked queries
-- Check that your profile ID is correct
+---
 
-### "API request failed"
+### No Profiles Found
 
-- Verify your API key is valid at [my.nextdns.io](https://my.nextdns.io)
-- Check your internet connection
-- NextDNS API may be temporarily unavailable — retry later
+```
+Error: No NextDNS profiles found.
+```
 
-### "No NextDNS profiles found"
+**Fix:** Make sure your API key is valid and you have at least one profile.
 
-- Confirm your API key has access to profiles
-- You may need to create a NextDNS profile first
+---
+
+### Rate Limiting
+
+The API may rate limit requests. If you hit limits:
+- Wait a few seconds between requests
+- Use `--limit` to reduce result sets
+
+---
+
+### Invalid Date Format
+
+Use relative dates or ISO 8601:
+- `-1h` (1 hour ago)
+- `-1d` (1 day ago)
+- `-7d` (7 days ago)
+- `2024-01-15T16:34:05.203Z` (ISO 8601)
+
+---
+
+## API Reference
+
+For full API documentation, visit: [https://nextdns.github.io/api/](https://nextdns.github.io/api/)
 
 ---
 
 ## License
 
-MIT License — feel free to use, modify, and distribute.
-
----
-
-## Links
-
-- [NextDNS API Documentation](https://api.nextdns.io)
-- [NextDNS Dashboard](https://my.nextdns.io)
-- [Zo Computer](https://zo.computer)
-- [Report Issue](https://github.com/ShadowsDistant/nextdns-skill/issues)
+MIT License - feel free to use and modify.
